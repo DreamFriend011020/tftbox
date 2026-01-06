@@ -136,16 +136,99 @@ header {
 }
 
 .unit-icon {
-    width: 50px;
-    height: 50px;
+    width: 52px; /* 48px(이미지) + 4px(테두리) */
+    height: 52px;
     background-color: #333;
     border-radius: 4px;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
     display: flex;
-    align-items: flex-end;
-    justify-content: center; 
+    justify-content: center;
+    align-items: center;
     font-size: 10px;
     border: 2px solid;
 }
+
+.unit-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 툴팁 스타일 (lolchess.gg 스타일) */
+.c-tooltip {
+    position: absolute;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    color: #f3f4f6;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    white-space: pre-line;
+    line-height: 1.5;
+    min-width: 150px;
+}
+.c-tooltip strong { color: #c8aa6e; display: block; margin-bottom: 4px; font-size: 14px; border-bottom: 1px solid #374151; padding-bottom: 4px; }
+.c-tooltip .tooltip-cost { color: #9ca3af; font-size: 11px; margin-bottom: 4px; }
+.c-tooltip .tooltip-traits { color: #d1d5db; }
+
+/* 시너지(특성) 표시 스타일 */
+.deck-traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 20px 15px; /* 카드 패딩에 맞춤 */
+    border-bottom: 1px solid #2d3844; /* 구분선 */
+    margin-bottom: 15px;
+}
+
+.trait-badge {
+    display: flex;
+    align-items: center;
+    background: #2d3844;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #9ca3af;
+    border: 1px solid transparent;
+}
+.trait-badge.tier-bronze { background: #4a3b28; border-color: #805b30; color: #dcbfa5; }
+.trait-badge.tier-silver { background: #3c4650; border-color: #7f8c8d; color: #f0f0f0; }
+.trait-badge.tier-gold { background: #634d1a; border-color: #b8860b; color: #fceeb8; }
+.trait-badge.tier-chromatic { background: #2a4c52; border-color: #00ffcc; color: #e0ffff; box-shadow: 0 0 5px rgba(0,255,204,0.3); }
+.trait-count { font-weight: bold; margin-right: 4px; color: #fff; }
+
+/* 매치 히스토리 내 시너지 스타일 (MetaTFT 스타일) */
+.match-traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.match-trait {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #fff;
+    background-color: #2d3844; /* 기본(활성 안됨) */
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+}
+
+/* API style 값에 따른 색상: 0=None, 1=Bronze, 2=Silver, 3=Gold, 4=Chromatic */
+.match-trait.style-0 { background-color: #2d3844; opacity: 0.6; }
+.match-trait.style-1 { background-color: #4a3b28; border-color: #805b30; color: #dcbfa5; }
+.match-trait.style-2 { background-color: #3c4650; border-color: #7f8c8d; color: #f0f0f0; }
+.match-trait.style-3 { background-color: #634d1a; border-color: #b8860b; color: #fceeb8; }
+.match-trait.style-4 { background: linear-gradient(135deg, #2a4c52, #00ffcc); border-color: #00ffcc; color: #000; font-weight: bold; }
 
 /* 코스트별 색상 */
 .cost-1 { border-color: #808080; }
@@ -177,21 +260,6 @@ header {
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-}
-
-.sprite {
-    display: inline-block;
-    background-repeat: no-repeat;
-    vertical-align: middle;
-}
-
-/* JSON: x:0, y:96, w:48, h:48 */
-.sprite-ryze {
-    width: 48px;
-    height: 48px;
-    background-image: url("https://ddragon.leagueoflegends.com/cdn/15.24.1/img/tft-champion/tft-champion5.png");
-    background-position: 0px -96px;
-    /* 필요 시 background-size 조정 */
 }
 
 /* 반응형 헬퍼 */

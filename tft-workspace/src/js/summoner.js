@@ -85,8 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // start 파라미터 추가
-            const m = await fetchJson(`/api/summoner/matches?name=${encodeURIComponent(name)}&count=${MATCH_COUNT}&start=${currentStart}`);
+            // [수정] PUUID를 사용하여 매치 리스트 요청 (Server API 변경 대응)
+            const m = await fetchJson(`/api/summoner/matches?puuid=${encodeURIComponent(currentPuuid)}&count=${MATCH_COUNT}&start=${currentStart}`);
             const ids = m.matchIds || m.matchIds === undefined ? m.matchIds || [] : [];
 
             if (reset && !ids.length) {
@@ -209,57 +209,127 @@ document.addEventListener('DOMContentLoaded', () => {
     async function populateImages(container) {
         // ensure locale data loaded (ko_KR)
         await window.DD.loadLocaleData('ko_KR');
+        const version = await window.DD.getVersion();
+        const lang = 'ko_KR';
+
+        // TFT 챔피언 데이터 로드 (스킨 이미지 및 위치 보정용)
+        let tftChampions = {};
+        try {
+            const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/${lang}/tft-champion.json`);
+            if (res.ok) {
+                const json = await res.json();
+                tftChampions = json.data;
+            }
+        } catch (e) { console.warn('TFT Champion data load failed', e); }
 
         // item images
         const itemImgs = container.querySelectorAll('img[data-item-id]');
         await Promise.all(Array.from(itemImgs).map(async (img) => {
             const id = img.dataset.itemId;
-            try {
-                const url = await window.DD.getItemImageUrl(id);
-                img.src = url;
-                img.style.opacity = 1.0;
-                // set tooltip data from locale cache
-                const itemData = window.DD.getItemDataById(id);
-                if (itemData) {
-                    const name = itemData.name || `Item ${id}`;
-                    const desc = (itemData.description || '').replace(/<[^>]*>/g, ''); // strip HTML
-                    img.dataset.tooltip = `${name}\n${desc}`;
-                } else {
-                    img.dataset.tooltip = `Item ${id}`;
-                }
-                // listeners
-                img.addEventListener('mouseenter', (ev) => {
-                    showTooltip(`<strong>${(img.dataset.tooltip||'')}</strong>`, ev.pageX, ev.pageY);
-                });
-                img.addEventListener('mousemove', (ev) => {
-                    showTooltip(`<strong>${(img.dataset.tooltip||'')}</strong>`, ev.pageX, ev.pageY);
-                });
-                img.addEventListener('mouseleave', hideTooltip);
-            } catch (e) {
-                img.alt = 'no-item';
+            // [수정] 로컬 아이템 이미지 사용
+            img.src = `img/items/${id}.png`;
+            img.style.opacity = 1.0;
+            
+            // 툴팁 데이터 설정
+            const itemData = window.DD.getItemDataById(id);
+            if (itemData) {
+                const name = itemData.name || `Item ${id}`;
+                const desc = (itemData.description || '').replace(/<[^>]*>/g, '');
+                img.dataset.tooltip = `${name}\n${desc}`;
+            } else {
+                img.dataset.tooltip = `Item ${id}`;
             }
+
+            // 이벤트 리스너
+            img.addEventListener('mouseenter', (ev) => showTooltip(`<strong>${(img.dataset.tooltip||'')}</strong>`, ev.pageX, ev.pageY));
+            img.addEventListener('mousemove', (ev) => showTooltip(`<strong>${(img.dataset.tooltip||'')}</strong>`, ev.pageX, ev.pageY));
+            img.addEventListener('mouseleave', hideTooltip);
+
+            // 에러 처리 (로컬 파일 없을 시)
+            img.onerror = function() {
+                this.style.opacity = 0.3;
+            };
         }));
 
         // unit images (champion/unit)
-        const unitImgs = container.querySelectorAll('img[data-char-id]');
-        await Promise.all(Array.from(unitImgs).map(async (img) => {
-            const charId = img.dataset.charId;
-            try {
-                const url = await window.DD.getUnitImageUrl(charId);
-                img.src = url;
-                img.style.opacity = 1.0;
+        // [수정] img 태그 대신 div 배경 이미지 방식으로 변경하여 위치 보정 적용
+        const unitDivs = container.querySelectorAll('.unit-img[data-char-id]');
+        
+        // 챔피언별 얼굴 위치 보정 맵 (main.js와 동일)
+        const positionMap = {
+            'Taric': 'right top',
+            'Ryze': 'center top',
+            'Aphelios': 'center top',
+            'Nami': 'center top'
+        };
+
+        unitDivs.forEach(div => {
+            const charId = div.dataset.charId; // 예: "TFT9_Ryze"
+            let imageUrl = '';
+            let bgPos = 'center 15%';
+
+            // 1. TFT 데이터에서 챔피언 찾기
+            if (tftChampions) {
+                // 정확히 일치하거나, 접미사로 일치하는 키 찾기 (최신 세트 우선)
+                const candidates = Object.keys(tftChampions).filter(key => 
+                    key === charId || key.endsWith(`_${charId}`) || (charId.includes('_') && key.endsWith(`_${charId.split('_').pop()}`))
+                );
+
+                if (candidates.length > 0) {
+                    // 세트 번호 내림차순 정렬
+                    candidates.sort((a, b) => {
+                        const getSetNum = (k) => {
+                            const match = k.match(/TFT(\d+)/);
+                            return match ? parseInt(match[1], 10) : 0;
+                        };
+                        return getSetNum(b) - getSetNum(a);
+                    });
+                    const championKey = candidates[0];
+                    const championData = tftChampions[championKey];
+                    
+                    // [수정] 로컬 이미지 경로 사용
+                    const baseIdRaw = championKey.replace(/^TFT\d+_/, '').toLowerCase();
+                    const baseId = baseIdRaw.includes('/') ? baseIdRaw.split('/').pop() : baseIdRaw;
+                    imageUrl = `img/champions/${baseId}.png`;
+                }
+            }
+
+            // 2. TFT 데이터에 없으면 기본 LoL 이미지 사용 (Fallback)
+            if (!imageUrl) {
                 // try to set localized champ name
                 const norm = window.DD.normalizeUnitCharacterId(charId);
-                const champData = window.DD.getChampionDataByKey(norm);
-                const displayName = champData ? (champData.name || norm) : norm;
-                img.dataset.tooltip = displayName;
-                img.addEventListener('mouseenter', (ev) => showTooltip(`<strong>${img.dataset.tooltip}</strong>`, ev.pageX, ev.pageY));
-                img.addEventListener('mousemove', (ev) => showTooltip(`<strong>${img.dataset.tooltip}</strong>`, ev.pageX, ev.pageY));
-                img.addEventListener('mouseleave', hideTooltip);
-            } catch (e) {
-                img.alt = 'no-unit';
+                const baseId = norm.toLowerCase();
+                imageUrl = `img/champions/${baseId}.png`;
             }
-        }));
+
+            // [수정] 배경 이미지 대신 img 태그 삽입 (onerror 처리를 위해)
+            div.innerHTML = ''; // 기존 내용 제거
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+            
+            // 에러 발생 시 처리 (이미지가 없을 경우)
+            img.onerror = function() {
+                this.style.opacity = 0.3; // 이미지가 없으면 흐리게 표시
+            };
+            
+            div.appendChild(img);
+            div.style.opacity = '1';
+            div.style.background = 'none'; // 배경 제거
+
+            // 툴팁 설정
+            const norm = window.DD.normalizeUnitCharacterId(charId);
+            const champData = window.DD.getChampionDataByKey(norm);
+            const displayName = champData ? (champData.name || norm) : norm;
+            
+            div.dataset.tooltip = displayName;
+            div.addEventListener('mouseenter', (ev) => showTooltip(`<strong>${div.dataset.tooltip}</strong>`, ev.pageX, ev.pageY));
+            div.addEventListener('mousemove', (ev) => showTooltip(`<strong>${div.dataset.tooltip}</strong>`, ev.pageX, ev.pageY));
+            div.addEventListener('mouseleave', hideTooltip);
+        });
 
         // augment images
         const augmentImgs = container.querySelectorAll('img[data-augment-id]');
@@ -302,8 +372,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const gameLength = info.gameLength || info.game_time || 0;
         const timeStr = gameLength ? Math.round(gameLength / 60) + '분' : '-';
         const lastRound = participant.last_round ? `라운드 ${participant.last_round}` : '';
-        const traitsHtml = (participant.traits || []).filter(t => (t.tier_current ?? 0) > 0)
-            .map(t => `<span class="trait">${(t.name||'').replace(/^TFT_/, '')} ${t.tier_current||''}</span>`).join(' ') || '-';
+        
+        // [수정] 시너지(특성)를 스타일 배지로 표시
+        // API style: 0=None, 1=Bronze, 2=Silver, 3=Gold, 4=Chromatic
+        const traitsHtml = (participant.traits || [])
+            .filter(t => (t.tier_current ?? 0) > 0) // 활성화된 특성만
+            .sort((a, b) => b.style - a.style || b.num_units - a.num_units) // 높은 등급 우선 정렬
+            .map(t => {
+                const traitName = (t.name || '').replace(/^TFT\d+_/, ''); // "TFT9_Shurima" -> "Shurima"
+                // 한글화는 별도 매핑이 필요하지만 일단 영문 ID 출력 (추후 locale 데이터 활용 가능)
+                return `<div class="match-trait style-${t.style}" title="${traitName}"><span>${t.num_units}</span>&nbsp;${traitName}</div>`;
+            }).join('');
 
         const augmentsHtml = (participant.augments || []).map(aug => 
             `<img class="augment-img" data-augment-id="${aug}" alt="${aug}" width="32" height="32" style="opacity:0">`
@@ -315,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemsHtml = (u.items || []).map(it => `<img class="item" data-item-id="${it}" alt="item-${it}" width="28" height="28" style="opacity:0">`).join('');
             return `
                 <div class="unit">
-                    <img class="unit-img" data-char-id="${uname}" alt="${uname}" width="48" height="48" style="opacity:0">
+                    <div class="unit-img" data-char-id="${uname}" style="width:48px; height:48px; background-color:#333; border-radius:4px; opacity:0; overflow:hidden;"></div>
                     <span class="unit-name">${uname.replace(/^TFT.*_/,'')}</span>
                     <div class="items">${itemsHtml || '-'}</div>
                 </div>
@@ -337,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>종합 점수: ${participant.total_damage_to_players ?? '-'}</div>
                     <div class="augments">${augmentsHtml}</div>
                 </div>
-                <div class="traits" style="flex-basis: 100%; margin-top: 8px;">${traitsHtml}</div>
+                <div class="match-traits" style="flex-basis: 100%;">${traitsHtml || '<span style="color:#666; font-size:12px;">활성 특성 없음</span>'}</div>
                 <div class="unit-list">${units || '<div>유닛 정보 없음</div>'}</div>
                 <div style="grid-column:1/-1">${companionHtml}</div>
             </div>
