@@ -1,5 +1,8 @@
 // TFT 데이터 로드, 이미지 적용, 시너지 계산, 툴팁 처리
 async function initTftApp() {
+    // 1. 검색 기능 초기화
+    setupSearch();
+
     const unitIcons = document.querySelectorAll('.unit-icon');
     const itemIcons = document.querySelectorAll('.item-icon');
     if (unitIcons.length === 0 && itemIcons.length === 0) return;
@@ -125,6 +128,34 @@ async function initTftApp() {
     } catch (error) {
         console.error('TFT 데이터 로드 실패:', error);
     }
+}
+
+// 검색 기능 설정 함수
+function setupSearch() {
+    const input = document.getElementById('summoner-input');
+    const btn = document.getElementById('summoner-search-btn');
+
+    if (!input || !btn) return;
+
+    function goSearch() {
+        const val = input.value.trim();
+        if (!val) return alert('소환사명#태그를 입력해주세요.');
+        
+        const parts = val.split('#');
+        if (parts.length < 2) {
+            return alert('소환사명#태그 형식을 지켜주세요. (예: Hide on bush#KR1)');
+        }
+        
+        const name = parts.slice(0, -1).join('#');
+        const tag = parts[parts.length - 1];
+        
+        window.location.href = `/summoner.html?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`;
+    }
+
+    btn.addEventListener('click', goSearch);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') goSearch();
+    });
 }
 
 // 툴팁 관련 로직
