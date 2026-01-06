@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TFT.GG - 전략적 팀 전투 공략</title>
-    <link rel="stylesheet" href="tft_main.css">
+    <title>TFTBOX.GG - 전략적 팀 전투 공략</title>
+    <link rel="stylesheet" href="css/tft_main.css">
 </head>
 <body>
 
     <header>
         <nav class="navbar">
-            <div class="logo">TFT.GG</div>
+            <div class="logo">TFTBOX.GG</div>
             <ul class="nav-links">
                 <li><a href="#">티어 리스트</a></li>
                 <li><a href="#">챔피언</a></li>
@@ -20,9 +20,10 @@
         <div class="hero-section">
             <h1>승리를 위한 완벽한 전략</h1>
             <div class="search-container">
-                <input type="text" placeholder="소환사명#태그 입력">
-                <button type="button">검색</button>
+                <input id="summoner-input" type="text" placeholder="소환사명#태그 입력">
+                <button id="summoner-search-btn" type="button">검색</button>
             </div>
+            <div id="search-result" class="search-result"></div>
         </div>
     </header>
 
@@ -36,15 +37,15 @@
                         <h3>슈리마 라이즈</h3>
                     </div>
                     <div class="unit-list">
-                        <div class="unit-icon cost-2">뽀삐</div>
-                        <div class="unit-icon cost-2">신짜오</div>
-                        <div class="unit-icon cost-3">케넨</div>
-                        <div class="unit-icon cost-4">가렌</div>
-                        <div class="unit-icon cost-4">나서스</div>
-                        <div class="unit-icon cost-4">타릭</div>
-                        <div class="unit-icon cost-5">세트</div>
-                        <div class="unit-icon cost-5">아지르</div>
-                        <div class="unit-icon cost-7">라이즈<img src="https://ddragon.leagueoflegends.com/cdn/15.24.1/img/tft-champion/TFT12_Ryze.png">/div>
+                        <div class="unit-icon cost-2" data-char-id="Poppy">뽀삐</div>
+                        <div class="unit-icon cost-2" data-char-id="XinZhao">신짜오</div>
+                        <div class="unit-icon cost-3" data-char-id="Kennen">케넨</div>
+                        <div class="unit-icon cost-4" data-char-id="Garen">가렌</div>
+                        <div class="unit-icon cost-4" data-char-id="Nasus">나서스</div>
+                        <div class="unit-icon cost-4" data-char-id="Taric">타릭</div>
+                        <div class="unit-icon cost-5" data-char-id="Sett">세트</div>
+                        <div class="unit-icon cost-5" data-char-id="Azir">아지르</div>
+                        <div class="unit-icon cost-5" data-char-id="Ryze">라이즈</div>
                     </div>
                     <p class="deck-stats">승률: 15.2% | Top 4: 52.4%</p>
                 </div>
@@ -54,15 +55,15 @@
                         <h3>고밸류 빌지워터</h3>
                     </div>
                     <div class="unit-list">
-                        <div class="unit-icon cost-2">카사딘</div>
-                        <div class="unit-icon cost-3">라이즈</div>
-                        <div class="unit-icon cost-4">타릭</div>
-                        <div class="unit-icon cost-4">노라</div>
-                        <div class="unit-icon cost-4">노라</div>
-                        <div class="unit-icon cost-4">노라</div>
-                        <div class="unit-icon cost-4">노라</div>
-                        <div class="unit-icon cost-4">노라</div>
-                        <div class="unit-icon cost-4">노라</div>
+                        <div class="unit-icon cost-2" data-char-id="Kassadin">카사딘</div>
+                        <div class="unit-icon cost-3" data-char-id="Ryze">라이즈</div>
+                        <div class="unit-icon cost-4" data-char-id="Taric">타릭</div>
+                        <div class="unit-icon cost-5" data-char-id="Norra">노라</div>
+                        <div class="unit-icon cost-5" data-char-id="Yuumi">유미</div>
+                        <div class="unit-icon cost-4" data-char-id="Nami">나미</div>
+                        <div class="unit-icon cost-4" data-char-id="Vex">벡스</div>
+                        <div class="unit-icon cost-5" data-char-id="Milio">밀리오</div>
+                        <div class="unit-icon cost-5" data-char-id="Xerath">제라스</div>
                     </div>
                     <p class="deck-stats">승률: 14.8% | Top 4: 51.1%</p>
                 </div>
@@ -102,5 +103,7 @@
         <p>&copy; 2026 TFT Meta Helper. 이 사이트는 라이엇 게임즈와 관련이 없습니다.</p>
     </footer>
 
+    <script src="js/ddragon.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

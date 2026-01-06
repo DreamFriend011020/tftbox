@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>소환사 전적 - TFT</title>
+    <link rel="stylesheet" href="css/tft_main.css">
+    <link rel="stylesheet" href="css/pages/summoner.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">TFT.GG</div>
+            <ul class="nav-links">
+                <li><a href="/tft_main.html">홈</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section id="summoner-info" class="summoner-info">
+            <h2>소환사 정보</h2>
+            <div id="summoner-card">로딩 중...</div>
+        </section>
+
+        <section id="match-list-section">
+            <h2>최근 매치 (최대 10)</h2>
+            <div class="match-controls">
+                <div class="filters" id="match-filters">
+                    <button class="filter-btn active" data-filter="all">전체</button>
+                    <button class="filter-btn" data-filter="ranked">랭크</button>
+                    <button class="filter-btn" data-filter="normal">일반</button>
+                </div>
+                <select id="sort-select" class="sort-select">
+                    <option value="recent">최신순</option>
+                    <option value="placement">등수순</option>
+                </select>
+            </div>
+            <div id="match-list">로딩 중...</div>
+            <div class="load-more-container">
+                <button id="btn-load-more" class="btn-more" style="display: none;">더 보기</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 TFT Meta Helper. 이 사이트는 라이엇 게임즈와 관련이 없습니다.</p>
+    </footer>
+
+    <script src="js/ddragon.js"></script>
+    <script src="js/summoner.js"></script>
+</body>
+</html>

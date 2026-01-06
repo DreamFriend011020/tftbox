@@ -1,0 +1,245 @@
+/* summoner 페이지 전용 스타일 (tft_main.css에서 분리) */
+.summoner-info .summoner-card {
+    background: #1a232e;
+    color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+    border: 1px solid #2d3844;
+}
+
+.match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 필터 및 정렬 컨트롤 */
+.match-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    background: #1a232e;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #2d3844;
+}
+
+.filters {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-btn {
+    background: #2d3844;
+    border: 1px solid #3e4c5a;
+    color: #aaa;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover { background: #3e4c5a; color: #fff; }
+.filter-btn.active { background: #c8aa6e; color: #000; border-color: #c8aa6e; font-weight: bold; }
+
+.sort-select {
+    background: #2d3844;
+    color: #fff;
+    border: 1px solid #3e4c5a;
+    padding: 6px 10px;
+    border-radius: 4px;
+    outline: none;
+}
+
+.match-item {
+    background-color: #1a232e;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #4a5a6a; /* 기본 테두리 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.match-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+}
+
+.match-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    gap: 5px;
+}
+
+.queue-type {
+    font-size: 12px;
+    font-weight: bold;
+    color: #c8aa6e;
+    margin-bottom: 2px;
+}
+
+.placement {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.time {
+    font-size: 13px;
+    color: #888;
+}
+
+.traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 220px;
+}
+
+.trait {
+    background-color: #2d3844;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #ccc;
+    border: 1px solid #3e4c5a;
+}
+
+.augments {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.augment-img {
+    border-radius: 50%; /* 증강체는 보통 둥글거나 육각형이지만 원형으로 처리 */
+    border: 1px solid #c8aa6e;
+    background-color: #000;
+}
+
+.unit-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex: 1;
+}
+
+.unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50px;
+    position: relative;
+}
+
+.unit-img {
+    border-radius: 4px;
+    border: 2px solid #444;
+    background-color: #000;
+    object-fit: cover;
+}
+
+.unit-name {
+    font-size: 10px;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.items {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    bottom: 16px; /* 유닛 이름 위, 이미지 하단 */
+    left: 50%;
+    transform: translateX(-50%);
+    gap: 1px;
+    width: 100%;
+}
+
+.items .item {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #333;
+    border-radius: 2px;
+    background-color: #000;
+}
+
+/* match detail pre */
+#match-detail pre {
+    background:#0f172a;
+    color:#e6eef6;
+    padding:12px;
+    border-radius:8px;
+    overflow:auto;
+    max-height:60vh;
+}
+
+/* 툴팁 */
+.c-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: pre-wrap;
+    border: 1px solid #555;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    max-width: 250px;
+}
+
+.search-error {
+    color: #ff6b6b;
+    padding: 20px;
+    text-align: center;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 8px;
+}
+
+.no-data {
+    color: #888;
+    padding: 40px;
+    text-align: center;
+    font-style: italic;
+}
+
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.btn-more {
+    background-color: #2d3844;
+    color: #c8aa6e;
+    border: 1px solid #c8aa6e;
+    padding: 10px 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.btn-more:hover {
+    background-color: #c8aa6e;
+    color: #000;
+}
+
+.btn-more:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

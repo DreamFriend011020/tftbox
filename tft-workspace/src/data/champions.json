@@ -1,0 +1,85 @@
+{
+    "champions": [
+        {
+            "name": "뽀삐",
+            "cost": 2,
+            "traits": ["전사", "경계"],
+            "abilities": {
+                "name": "방벽",
+                "description": "뽀삐가 방벽을 세워 적의 공격을 차단합니다."
+            }
+        },
+        {
+            "name": "신짜오",
+            "cost": 2,
+            "traits": ["전사", "경계"],
+            "abilities": {
+                "name": "창의 일격",
+                "description": "신짜오가 적에게 강력한 일격을 가합니다."
+            }
+        },
+        {
+            "name": "케넨",
+            "cost": 3,
+            "traits": ["마법사", "경계"],
+            "abilities": {
+                "name": "전기 폭풍",
+                "description": "케넨이 적에게 전기 폭풍을 일으켜 피해를 줍니다."
+            }
+        },
+        {
+            "name": "가렌",
+            "cost": 4,
+            "traits": ["전사", "경계"],
+            "abilities": {
+                "name": "결정타",
+                "description": "가렌이 적에게 강력한 결정타를 가합니다."
+            }
+        },
+        {
+            "name": "나서스",
+            "cost": 4,
+            "traits": ["전사", "경계"],
+            "abilities": {
+                "name": "영혼 수확",
+                "description": "나서스가 적을 처치할 때마다 힘을 얻습니다."
+            }
+        },
+        {
+            "name": "타릭",
+            "cost": 4,
+            "traits": ["전사", "경계"],
+            "abilities": {
+                "name": "빛의 방패",
+                "description": "타릭이 아군에게 방어막을 제공합니다."
+            }
+        },
+        {
+            "name": "세트",
+            "cost": 5,
+            "traits": ["전사", "경계"],
+            "abilities": {
+                "name": "파괴의 일격",
+                "description": "세트가 적에게 강력한 일격을 가합니다."
+            }
+        },
+        {
+            "name": "아지르",
+            "cost": 5,
+            "traits": ["마법사", "경계"],
+            "abilities": {
+                "name": "모래 군대",
+                "description": "아지르가 모래 군대를 소환하여 적을 공격합니다."
+            }
+        },
+        {
+            "name": "라이즈",
+            "cost": 7,
+            "traits": ["마법사", "경계"],
+            "abilities": {
+                "name": "마법의 힘",
+                "description": "라이즈가 적에게 강력한 마법 공격을 가합니다."
+            }
+        }
+    ]
+}
