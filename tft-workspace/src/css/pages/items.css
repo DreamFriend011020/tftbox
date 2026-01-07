@@ -1,0 +1,43 @@
+/* 아이템 분석 페이지 전용 스타일 */
+.analysis-container { padding: 20px; max-width: 1200px; margin: 0 auto; color: #ecf0f1; }
+.filters { margin-bottom: 20px; display: flex; gap: 10px; }
+.filter-btn { padding: 8px 16px; background: #2a2e35; border: 1px solid #3c414a; color: #a0a0a0; cursor: pointer; border-radius: 4px; font-size: 13px; transition: all 0.2s; }
+.filter-btn:hover { background: #323842; color: #fff; }
+.filter-btn.active { background: #3498db; color: #fff; border-color: #3498db; }
+
+.item-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    background-color: #1e2328; 
+    border-radius: 6px; 
+    overflow: hidden; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    font-size: 13px;
+}
+
+.item-table th { 
+    background-color: #252a31; 
+    color: #8890b5; 
+    font-weight: 600; 
+    padding: 14px 15px; 
+    text-align: left; 
+    border-bottom: 2px solid #2e333a;
+}
+
+.item-table td { 
+    padding: 12px 15px; 
+    border-bottom: 1px solid #2a2e35; 
+    color: #e0e0e0; 
+    vertical-align: middle;
+}
+
+.item-table tr:hover { background-color: #2a2e35; cursor: pointer; }
+
+.item-icon-cell { width: 70px; text-align: center; padding-left: 15px; }
+.item-img { width: 42px; height: 42px; border-radius: 6px; border: 1px solid #3c414a; display: block; margin: 0 auto; }
+
+.item-name { font-weight: 600; color: #fff; font-size: 14px; margin-bottom: 4px; }
+.item-desc { font-size: 12px; color: #9ca3af; line-height: 1.5; }
+.item-recipe { display: flex; align-items: center; gap: 8px; }
+.recipe-plus { color: #6b7280; font-size: 12px; }
+.recipe-img { width: 32px; height: 32px; border-radius: 4px; border: 1px solid #3c414a; }

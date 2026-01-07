@@ -5,7 +5,8 @@ async function initTftApp() {
 
     const unitIcons = document.querySelectorAll('.unit-icon');
     const itemIcons = document.querySelectorAll('.item-icon');
-    if (unitIcons.length === 0 && itemIcons.length === 0) return;
+    const companionIcons = document.querySelectorAll('.companion-icon');
+    if (unitIcons.length === 0 && itemIcons.length === 0 && companionIcons.length === 0) return;
 
     try {
         // 0. 버전 조회 (ddragon.js와 통일하여 버전 불일치 방지)
@@ -32,6 +33,20 @@ async function initTftApp() {
         }
         const champJson = await champRes.json();
         const champions = champJson.data;
+
+        // [추가] 특성(Traits) 데이터 로드 (시너지 계산용)
+        let traitsData = {};
+        try {
+            let traitRes = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/${lang}/tft-trait.json`);
+            if (!traitRes.ok) {
+                // 버전 불일치 시 안정화 버전 사용
+                traitRes = await fetch(`https://ddragon.leagueoflegends.com/cdn/13.21.1/data/${lang}/tft-trait.json`);
+            }
+            if (traitRes.ok) {
+                const traitJson = await traitRes.json();
+                traitsData = traitJson.data;
+            }
+        } catch (e) { console.warn('Traits load failed', e); }
 
         // 2. 각 아이콘에 이미지 적용
         unitIcons.forEach(icon => {
@@ -125,6 +140,28 @@ async function initTftApp() {
             `;
         });
 
+        // [추가] 동반자(Little Legend) 아이콘 이미지 적용
+        companionIcons.forEach(icon => {
+            const companionId = icon.getAttribute('data-companion-id');
+            if (!companionId) return;
+
+            const baseId = String(companionId).toLowerCase();
+            // CommunityDragon 경로 시도 (loadouts/companions가 일반적)
+            const url1 = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/loadouts/companions/${baseId}.png`;
+            // 일부 미니 챔피언 등은 characters 경로에 있을 수 있음 (Fallback)
+            const url2 = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/characters/${baseId}/hud/${baseId}_square.png`;
+
+            icon.innerHTML = `
+                <img src="${url1}" 
+                     onerror="this.onerror=null; this.src='${url2}';"
+                     alt="${companionId}" 
+                     style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            `;
+        });
+
+        // 4. 시너지 계산 및 표시
+        calculateSynergies(unitIcons, traitsData);
+
     } catch (error) {
         console.error('TFT 데이터 로드 실패:', error);
     }
@@ -137,6 +174,54 @@ function setupSearch() {
 
     if (!input || !btn) return;
 
+    // [추가] 최근 검색 기록 UI 및 로직
+    const historyContainer = document.createElement('div');
+    historyContainer.className = 'search-history';
+    Object.assign(historyContainer.style, {
+        position: 'absolute', top: '100%', left: '0', right: '0',
+        background: '#2c3e50', border: '1px solid #34495e', borderRadius: '0 0 4px 4px',
+        zIndex: '1000', display: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+    });
+    input.parentNode.style.position = 'relative';
+    input.parentNode.appendChild(historyContainer);
+
+    const loadHistory = () => JSON.parse(localStorage.getItem('tft_recent_searches') || '[]');
+    const saveHistory = (newHistory) => localStorage.setItem('tft_recent_searches', JSON.stringify(newHistory));
+
+    const renderHistory = () => {
+        const history = loadHistory();
+        if (history.length === 0) {
+            historyContainer.style.display = 'none';
+            return;
+        }
+        historyContainer.innerHTML = '';
+        history.forEach(query => {
+            const item = document.createElement('div');
+            Object.assign(item.style, {
+                padding: '10px', cursor: 'pointer', color: '#ecf0f1',
+                borderBottom: '1px solid #34495e', fontSize: '14px', textAlign: 'left'
+            });
+            item.textContent = query;
+            
+            // 호버 효과
+            item.onmouseenter = () => item.style.background = '#34495e';
+            item.onmouseleave = () => item.style.background = 'transparent';
+            
+            // 클릭 시 검색
+            item.onclick = (e) => {
+                e.preventDefault(); // 포커스 유지 방지
+                input.value = query;
+                goSearch();
+            };
+            historyContainer.appendChild(item);
+        });
+        historyContainer.style.display = 'block';
+    };
+
+    input.addEventListener('focus', renderHistory);
+    // blur 시 바로 사라지면 클릭 이벤트가 씹히므로 지연 처리
+    input.addEventListener('blur', () => setTimeout(() => historyContainer.style.display = 'none', 200));
+
     function goSearch() {
         const val = input.value.trim();
         if (!val) return alert('소환사명#태그를 입력해주세요.');
@@ -146,6 +231,13 @@ function setupSearch() {
             return alert('소환사명#태그 형식을 지켜주세요. (예: Hide on bush#KR1)');
         }
         
+        // [추가] 검색어 저장
+        let history = loadHistory();
+        history = history.filter(h => h !== val); // 중복 제거
+        history.unshift(val); // 최신순
+        if (history.length > 5) history.pop(); // 최대 5개
+        saveHistory(history);
+
         const name = parts.slice(0, -1).join('#');
         const tag = parts[parts.length - 1];
         
@@ -173,10 +265,12 @@ function createTooltip() {
 function showTooltip(e, element) {
     createTooltip();
     const name = element.dataset.name || 'Unknown';
+    const cost = element.dataset.cost;
     const traits = JSON.parse(element.dataset.traits || '[]');
     
     tooltipEl.innerHTML = `
         <strong>${name}</strong>
+        ${cost && cost !== '?' ? `<div class="tooltip-cost">비용: ${cost}골드</div>` : ''}
         <div class="tooltip-traits">특성: ${traits.join(', ')}</div>
     `;
     
@@ -192,6 +286,58 @@ function moveTooltip(e) {
 
 function hideTooltip() {
     if (tooltipEl) tooltipEl.style.display = 'none';
+}
+
+// [추가] 시너지 계산 함수
+function calculateSynergies(unitIcons, traitsData) {
+    const uniqueUnits = new Set();
+    const traitCounts = {};
+
+    // 1. 배치된 유닛들의 특성 집계 (중복 유닛 제외)
+    unitIcons.forEach(icon => {
+        const charId = icon.getAttribute('data-char-id');
+        // 유닛 ID가 없거나 이미 집계된 유닛이면 건너뜀 (TFT는 중복 유닛 시너지 미적용이 기본)
+        if (!charId || uniqueUnits.has(charId)) return;
+        
+        uniqueUnits.add(charId);
+        const traits = JSON.parse(icon.dataset.traits || '[]');
+        traits.forEach(t => {
+            traitCounts[t] = (traitCounts[t] || 0) + 1;
+        });
+    });
+
+    // 2. 활성화된 시너지 계산
+    const activeSynergies = [];
+    Object.keys(traitCounts).forEach(traitName => {
+        // 특성 데이터 찾기 (이름 일치 확인)
+        const traitKey = Object.keys(traitsData).find(k => traitsData[k].name === traitName);
+        if (!traitKey) return;
+
+        const data = traitsData[traitKey];
+        const count = traitCounts[traitName];
+        const sets = data.sets || [];
+        
+        // 현재 개수에 해당하는 등급(style) 찾기 (내림차순 검색)
+        const activeSet = sets.sort((a, b) => b.min - a.min).find(s => count >= s.min);
+        
+        if (activeSet) {
+            activeSynergies.push({ name: traitName, count, style: activeSet.style });
+        }
+    });
+
+    // 3. 결과 출력 (HTML 요소 #synergy-list가 있다고 가정)
+    const container = document.getElementById('synergy-list');
+    if (container) {
+        // 정렬: 등급 높은 순(chromatic > gold > silver > bronze) -> 개수 많은 순
+        const styleWeight = { chromatic: 5, prismatic: 5, gold: 4, silver: 3, bronze: 2, none: 1 };
+        activeSynergies.sort((a, b) => (styleWeight[b.style] || 0) - (styleWeight[a.style] || 0) || b.count - a.count);
+        
+        container.innerHTML = activeSynergies.map(s => 
+            `<div class="synergy-item ${s.style}"><b>${s.count}</b> ${s.name}</div>`
+        ).join('');
+    } else {
+        console.log('계산된 시너지:', activeSynergies);
+    }
 }
 
 // DOM 로드 후 실행

@@ -24,13 +24,21 @@ window.DD = (function () {
         // item + champion 데이터(로컬라이즈된 이름/description) 캐시
         if (cache.itemData && cache.champData && cache.locale === locale) return;
         try {
-            const [itemJson, champJson, augmentJson] = await Promise.all([
-                fetchJson(`/api/ddragon/data/${locale}/item.json`),
-                fetchJson(`/api/ddragon/data/${locale}/champion.json`),
+            // [수정] tft-item.json 로드 실패 시 안정화 버전(13.21.1) 사용
+            const fetchTftItems = async () => {
+                try { return await fetchJson(`/api/ddragon/data/${locale}/tft-item.json`); }
+                catch (e) { return fetchJson(`https://ddragon.leagueoflegends.com/cdn/13.21.1/data/${locale}/tft-item.json`).catch(() => ({ data: {} })); }
+            };
+
+            const [itemJson, tftItemJson, champJson, augmentJson] = await Promise.all([
+                fetchJson(`/api/ddragon/data/${locale}/item.json`).catch(() => ({ data: {} })),
+                fetchTftItems().catch(() => ({ data: {} })),
+                fetchJson(`/api/ddragon/data/${locale}/champion.json`).catch(() => ({ data: {} })),
                 fetchJson(`/api/ddragon/data/${locale}/tft-augments.json`).catch(() => ({ data: {} }))
             ]);
             // item: itemJson.data is map of id->info
-            cache.itemData = itemJson.data || {};
+            // 일반 아이템과 TFT 아이템 데이터를 병합 (TFT 아이템 우선)
+            cache.itemData = { ...(itemJson.data || {}), ...(tftItemJson.data || {}) };
             cache.champData = champJson.data || {};
             cache.augmentData = augmentJson.data || {};
             cache.locale = locale;
@@ -91,7 +99,12 @@ window.DD = (function () {
     function getItemDataById(id) {
         if (!cache.itemData) return null;
         // item.json keys are string ids
-        return cache.itemData[String(id)] || null;
+        if (cache.itemData[String(id)]) return cache.itemData[String(id)];
+
+        // [추가] 키로 찾지 못한 경우, 값(Value)들의 id 프로퍼티를 검색 (TFT 아이템 대응)
+        // 예: Key="TFT_Item_BFSword", Value={ id: 1, ... }
+        const foundKey = Object.keys(cache.itemData).find(key => cache.itemData[key].id == id);
+        return foundKey ? cache.itemData[foundKey] : null;
     }
     function getChampionDataByKey(keyName) {
         if (!cache.champData) return null;
