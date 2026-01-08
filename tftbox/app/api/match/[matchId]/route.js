@@ -5,7 +5,7 @@ const RIOT_KEY = process.env.RIOT_API_KEY;
 const REGION = 'asia';
 
 export async function GET(request, { params }) {
-  const { matchId } = params;
+  const { matchId } = await params;
 
   try {
     const url = `https://${REGION}.api.riotgames.com/tft/match/v1/matches/${matchId}`;

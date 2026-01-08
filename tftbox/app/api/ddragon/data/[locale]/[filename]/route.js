@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 
 export async function GET(request, { params }) {
-  const { locale, filename } = params;
+  const { locale, filename } = await params;
   try {
     // 최신 버전 조회
     const versionsRes = await axios.get('https://ddragon.leagueoflegends.com/api/versions.json');

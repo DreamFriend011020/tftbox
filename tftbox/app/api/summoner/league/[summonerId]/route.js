@@ -5,7 +5,7 @@ const RIOT_KEY = process.env.RIOT_API_KEY;
 const PLATFORM = 'kr';
 
 export async function GET(request, { params }) {
-  const { summonerId } = params;
+  const { summonerId } = await params;
   if (!summonerId) return NextResponse.json({ error: 'summonerId required' }, { status: 400 });
 
   try {
