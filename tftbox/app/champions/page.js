@@ -8,6 +8,8 @@ export default function ChampionsPage() {
   const [champions, setChampions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [costFilter, setCostFilter] = useState('all');
+  const [sortColumn, setSortColumn] = useState('averagePlacement');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     const fetchChampions = async () => {
@@ -50,20 +52,6 @@ export default function ChampionsPage() {
     fetchChampions();
   }, []);
 
-  const filteredChampions = champions
-    .filter(champ => {
-      if (costFilter === 'all') return true;
-      if (costFilter === '5+') return champ.cost >= 5;
-      return champ.cost === parseInt(costFilter);
-    })
-    .sort((a, b) => {
-      // 정렬: 평균 등수 낮은 순(오름차순) -> 이름 순
-      if (a.averagePlacement !== b.averagePlacement) {
-        return a.averagePlacement - b.averagePlacement;
-      }
-      return a.name.localeCompare(b.name);
-    });
-
   const getTier = (avg) => {
     if (avg <= 4.2) return 'S';
     if (avg <= 4.4) return 'A';
@@ -71,6 +59,62 @@ export default function ChampionsPage() {
     if (avg <= 4.8) return 'C';
     return 'D';
   };
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      if (column === 'winRate' || column === 'frequency') {
+        setSortDirection('desc');
+      } else {
+        setSortDirection('asc');
+      }
+    }
+  };
+
+  const tierOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 };
+
+  const filteredChampions = champions
+    .filter(champ => {
+      if (costFilter === 'all') return true;
+      if (costFilter === '5+') return champ.cost >= 5;
+      return champ.cost === parseInt(costFilter);
+    })
+    .sort((a, b) => {
+      const order = sortDirection === 'asc' ? 1 : -1;
+
+      if (sortColumn === 'tier') {
+        const aTier = getTier(a.averagePlacement);
+        const bTier = getTier(b.averagePlacement);
+        const tierComparison = tierOrder[aTier] - tierOrder[bTier];
+        
+        if (tierComparison !== 0) {
+          return tierComparison * order;
+        }
+        
+        const avgPlacementComparison = a.averagePlacement - b.averagePlacement;
+        if (avgPlacementComparison !== 0) {
+          return avgPlacementComparison;
+        }
+
+        return a.name.localeCompare(b.name);
+      }
+      
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (aValue === undefined || bValue === undefined) return 0;
+
+      if (sortColumn === 'name') {
+        return a.name.localeCompare(b.name) * order;
+      }
+
+      if (typeof aValue === 'string') {
+        return aValue.localeCompare(bValue) * order;
+      }
+      return (aValue - bValue) * order;
+    });
 
   const getTierColor = (tier) => {
     switch (tier) {
@@ -92,6 +136,11 @@ export default function ChampionsPage() {
       case 7: return 'border-orange-500'; // 특수 코스트 예시
       default: return 'border-gray-700';
     }
+  };
+
+  const SortArrow = ({ direction }) => {
+    if (!direction) return null;
+    return <span className="ml-1">{direction === 'asc' ? '▲' : '▼'}</span>;
   };
 
   return (
@@ -120,11 +169,26 @@ export default function ChampionsPage() {
             <thead>
               <tr className="bg-gray-700 text-gray-300 text-sm uppercase tracking-wider">
                 <th className="p-4 font-semibold border-b border-gray-600 w-16">#</th>
-                <th className="p-4 font-semibold border-b border-gray-600">챔피언</th>
-                <th className="p-4 font-semibold border-b border-gray-600">티어</th>
-                <th className="p-4 font-semibold border-b border-gray-600">평균 등수</th>
-                <th className="p-4 font-semibold border-b border-gray-600">승률</th>
-                <th className="p-4 font-semibold border-b border-gray-600">빈도</th>
+                <th className="p-4 font-semibold border-b border-gray-600 cursor-pointer" onClick={() => handleSort('name')}>
+                  챔피언
+                  <SortArrow direction={sortColumn === 'name' ? sortDirection : null} />
+                </th>
+                <th className="p-4 font-semibold border-b border-gray-600 cursor-pointer" onClick={() => handleSort('tier')}>
+                  티어
+                  <SortArrow direction={sortColumn === 'tier' ? sortDirection : null} />
+                </th>
+                <th className="p-4 font-semibold border-b border-gray-600 cursor-pointer" onClick={() => handleSort('averagePlacement')}>
+                  평균 등수
+                  <SortArrow direction={sortColumn === 'averagePlacement' ? sortDirection : null} />
+                </th>
+                <th className="p-4 font-semibold border-b border-gray-600 cursor-pointer" onClick={() => handleSort('winRate')}>
+                  승률
+                  <SortArrow direction={sortColumn === 'winRate' ? sortDirection : null} />
+                </th>
+                <th className="p-4 font-semibold border-b border-gray-600 cursor-pointer" onClick={() => handleSort('frequency')}>
+                  빈도
+                  <SortArrow direction={sortColumn === 'frequency' ? sortDirection : null} />
+                </th>
                 <th className="p-4 font-semibold border-b border-gray-600">인기 아이템</th>
               </tr>
             </thead>
