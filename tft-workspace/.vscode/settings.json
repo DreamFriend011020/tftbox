@@ -1,9 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    "files.autoSave": "afterDelay",
-    "javascript.validate.enable": true,
-    "css.validate": true,
-    "html.validate": true,
-    "eslint.enable": true,
-    "prettier.requireConfig": true
-}
