@@ -114,6 +114,18 @@ export default function ChampionsPage() {
     }
   };
 
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      // 승률, Top 4%, 빈도는 높은 것이 좋으므로 내림차순 기본
+      setSortDirection(['winRate', 'top4Rate', 'frequency'].includes(column) ? 'desc' : 'asc');
+    }
+  };
+
+  const SortIcon = ({ column }) => sortColumn === column ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : null;
+
   return (
     <div className="min-h-screen bg-[#0f111a] text-gray-100 font-sans">
       <Navbar />
@@ -155,12 +167,12 @@ export default function ChampionsPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-700 bg-gray-800/50 text-gray-400 text-[11px] font-bold uppercase tracking-widest">
-                <th className="p-5 cursor-pointer hover:text-white" onClick={() => setSortColumn('name')}>챔피언</th>
-                <th className="p-5 cursor-pointer hover:text-white" onClick={() => setSortColumn('tier')}>티어</th>
-                <th className="p-5 cursor-pointer hover:text-white" onClick={() => setSortColumn('averagePlacement')}>평균 등수</th>
-                <th className="p-5 cursor-pointer hover:text-white" onClick={() => setSortColumn('winRate')}>승률</th>
-                <th className="p-5 cursor-pointer hover:text-white" onClick={() => setSortColumn('top4Rate')}>Top 4%</th>
-                <th className="p-5 cursor-pointer hover:text-white" onClick={() => setSortColumn('frequency')}>빈도</th>
+                <th className="p-5 cursor-pointer hover:text-white" onClick={() => handleSort('name')}>챔피언<SortIcon column="name" /></th>
+                <th className="p-5 cursor-pointer hover:text-white" onClick={() => handleSort('tier')}>티어<SortIcon column="tier" /></th>
+                <th className="p-5 cursor-pointer hover:text-white" onClick={() => handleSort('averagePlacement')}>평균 등수<SortIcon column="averagePlacement" /></th>
+                <th className="p-5 cursor-pointer hover:text-white" onClick={() => handleSort('winRate')}>승률<SortIcon column="winRate" /></th>
+                <th className="p-5 cursor-pointer hover:text-white" onClick={() => handleSort('top4Rate')}>Top 4%<SortIcon column="top4Rate" /></th>
+                <th className="p-5 cursor-pointer hover:text-white" onClick={() => handleSort('frequency')}>빈도<SortIcon column="frequency" /></th>
                 <th className="p-5">추천 아이템</th>
               </tr>
             </thead>
