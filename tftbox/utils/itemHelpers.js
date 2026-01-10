@@ -17,9 +17,9 @@ export const BLACKLIST_KEYWORDS = [
 
   // 4. 현재 시즌에 사용되지 않는 유물 및 지원 아이템 (Outdated Artifacts & Support Items)
   'DuskbladeOfDraktharr', 'RocketPropelledFist', 'InnervatingLocket', 'BansheesVeil',
-  'EternalWinter', 'ZzRotPortal', 'TrickstersGlass', 'DeathfireGrasp', 'SuspiciousTrenchcoat',
+  'EternalWinter', 'ZzRotPortal', 'TrickstersGlass', 'DeathfireGrasp', 'SuspiciousTrenchCoat',
   'UnendingDespair', 'SpectralCutlass', 'ForbiddenIdol', 'RanduinsSanctum', 'ObsidianCleaver',
-  'TFT_Item_KnightsVow', 'AegisOfTheLegion', 'RadiantVirtue', 'ThiefsGlovesSupport', 
+  'AegisOfTheLegion', 'RadiantVirtue', 'ThiefsGlovesSupport', 
   'SupportKnightsVow', 'Moonstone', 'MendingEchoes'
 ];
   
@@ -29,7 +29,7 @@ export const BLACKLIST_KEYWORDS = [
     const id = parseInt(item.id) || 0;
   
     if (apiName.includes('radiant')) return 'radiant';
-    if (apiName.includes('artifact') || apiName.includes('ornn')) return 'artifact';
+    if (apiName.includes('artifact') || apiName.includes('ornn') || apiName.includes('Darkin')) return 'artifact';
     if (apiName.includes('emblemitem') || apiName.includes('emblem') || name.includes('상징')) return 'emblem';
     if (apiName.includes('bilgewater')) return 'trait'; // 요청하신 특성 분류
     if (apiName.includes('support')) return 'support';
@@ -38,7 +38,7 @@ export const BLACKLIST_KEYWORDS = [
     return 'completed';
   }
   
-  export function isValidItem(item, currentSet = 0) {
+  export function isValidItem(item, currentSet = 0, validNames = null) {
     const name = item.name || "";
     const apiName = item.apiName || String(item.id || "");
     const id = parseInt(item.id) || 0;
@@ -59,6 +59,11 @@ export const BLACKLIST_KEYWORDS = [
     const isSpecial = /Radiant|Artifact|Ornn|Support|Emblem|Bilgewater/i.test(apiName) || name.includes('상징');
     const hasRecipe = item.from && item.from.length > 0;
   
-    // 조합법이 있으면(hasRecipe) 일반 완성 아이템으로 간주하여 허용
-    return isComponent || isSpecial || hasRecipe;
+    // [수정] 조합법이 있으면 무조건 유효한 아이템으로 처리 (일반 완성 아이템)
+    if (hasRecipe) return true;
+
+    // 찬란한 아이템의 원본 이름과 일치하는 경우 유효한 일반 아이템으로 인정
+    const isRadiantCounterpart = validNames && validNames.has(name);
+
+    return isComponent || isSpecial || isRadiantCounterpart;
   }

@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 // 만약 utils 파일에서 가져오는 것이 계속 에러가 난다면, 
 // 아래에 직접 정의된 함수를 사용하게 됩니다.
 import { getItemCategory, isValidItem } from '../../utils/itemHelpers';
+import { ITEM_DESCRIPTIONS } from '../../utils/itemDescriptions';
 
 export default function ItemsPage() {
   const [items, setItems] = useState([]);
@@ -38,15 +39,40 @@ export default function ItemsPage() {
           }
         });
         console.log('Detected Set:', currentSet);
+
+        // [추가] 찬란한 아이템 이름을 기반으로 일반 아이템 이름 목록 생성
+        // 예: "찬란한 피바라기" -> "피바라기"
+        const radiantNames = new Set();
+        itemsArray.forEach(item => {
+          if (getItemCategory(item) === 'radiant') {
+            radiantNames.add(item.name.replace('찬란한 ', ''));
+          }
+        });
+
+        // [디버깅] 필터링 결과 로그 출력
+        const validList = [];
+        const invalidList = [];
+        itemsArray.forEach(item => {
+          if (isValidItem(item, currentSet, radiantNames)) {
+            validList.push(`[O] ${item.name} (${item.apiName})`);
+          } else {
+            invalidList.push(`[X] ${item.name} (${item.apiName})`);
+          }
+        });
+        console.log('=== Item Filter Debug ===');
+        console.log(`Total: ${itemsArray.length}, Valid: ${validList.length}, Invalid: ${invalidList.length}`);
+        console.log('Valid Samples:', validList.slice(0, 10));
+        console.log('Invalid Samples:', invalidList.slice(0, 10));
     
         const processedItems = itemsArray
-          .filter(item => isValidItem(item, currentSet)) // 현재 세트 정보를 전달하여 필터링
+          .filter(item => isValidItem(item, currentSet, radiantNames)) // 이름 목록 전달
           .map(item => {
             const name = item.name;
             const category = getItemCategory(item); // 유틸리티 함수 사용
     
             // 가상 데이터 생성 (ID와 이름 기반으로 고정값 생성)
             const seed = name.length + (parseInt(item.id) || 0);
+            
             return { 
               ...item, 
               category,
@@ -55,7 +81,7 @@ export default function ItemsPage() {
               top4Rate: 48.0 + (seed % 30) / 2,
               frequency: 50000 + (seed * 1500),
               // 로컬 이미지가 없을 경우를 대비해 CDN 이미지 경로도 저장
-              cdnImageUrl: `https://ddragon.leagueoflegends.com/cdn/16.1.1/img/tft-item/${item.image.full}`
+              cdnImageUrl: `https://ddragon.leagueoflegends.com/cdn/16.1.1/img/tft-item/${item.image?.full || item.id + '.png'}`
             };
           })
           // 최신 세트 우선 정렬 (ID가 클수록 최신) 후 이름 중복 제거
@@ -126,6 +152,56 @@ export default function ItemsPage() {
 
   const SortIcon = ({ column }) => sortColumn === column ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : null;
 
+  // 아이템 설명 파싱 함수 (변수 치환 및 태그 정리)
+  const parseItemDesc = (item) => {
+    // 로컬 설명이 있으면 우선 사용, 없으면 API 데이터 사용
+    const localDesc = ITEM_DESCRIPTIONS[item.apiName] || ITEM_DESCRIPTIONS[item.id];
+    const desc = localDesc || item.desc || item.description || '';
+    if (!desc) {
+      console.log(`[DEBUG] 설명 데이터 없음: ${item.name} (${item.apiName})`, item);
+      return '<span class="text-gray-500">설명 없음</span>';
+    }
+    
+    let result = desc;
+    const effects = item.effects || {};
+
+    // 1. 변수 치환 (@Variable@ -> 값)
+    Object.entries(effects).forEach(([key, val]) => {
+      if (val === undefined || val === null) return;
+      result = result.replace(new RegExp(`@${key}(\\*100)?@`, 'gi'), `<strong class="text-white">${val}</strong>`);
+    });
+
+    // 2. 태그 스타일링 및 정리
+    result = result.replace(/<br\s*\/?>/gi, '<br/>');
+    result = result.replace(/\n/g, '<br/>');
+    result = result.replace(/<tftitemrules>/gi, '<div class="mt-2 text-[11px] text-gray-400 leading-tight pt-2 border-t border-gray-700">');
+    result = result.replace(/<\/tftitemrules>/gi, '</div>');
+    
+    // 기타 태그 (예: <scaleAD>, <magicDamage>) -> 스타일 적용
+    result = result.replace(/<([a-zA-Z]+)[^>]*>(.*?)<\/\1>/g, '<span class="text-blue-300">$2</span>');
+    
+    // [추가] 아이콘 태그 치환 (%i:scaleType% -> 이미지)
+    // public/img/stats 폴더에 해당 이름의 png 파일이 있어야 합니다.
+    const iconMap = {
+      'scaleAD': 'ad',
+      'scaleAP': 'ap',
+      'scaleArmor': 'armor',
+      'scaleMR': 'mr',
+      'scaleHealth': 'health',
+      'scaleMana': 'mana',
+      'scaleAttackSpeed': 'attackspeed',
+      'scaleCrit': 'crit',
+      'scaleSV': 'vamp',
+    };
+
+    result = result.replace(/%i:([^%]+)%/g, (match, type) => {
+      const iconName = iconMap[type];
+      return iconName ? `<img src="/img/stats/${iconName}.png" alt="${type}" class="inline-block w-3.5 h-3.5 mr-0.5 align-middle opacity-90" />` : '';
+    });
+
+    return result;
+  };
+
   return (
     <div className="min-h-screen bg-[#0f111a] text-gray-100 font-sans">
       <Navbar />
@@ -172,7 +248,7 @@ export default function ItemsPage() {
           </div>
         </div>
 
-        <div className="bg-gray-800/30 rounded-2xl border border-gray-700 backdrop-blur-sm overflow-hidden shadow-2xl">
+        <div className="bg-gray-800/30 rounded-2xl border border-gray-700 backdrop-blur-sm overflow-visible shadow-2xl">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-700 bg-gray-800/50 text-gray-400 text-[11px] font-bold uppercase tracking-widest">
@@ -190,14 +266,20 @@ export default function ItemsPage() {
               ) : sortedAndFilteredItems.map((item) => (
                 <tr key={item.id} className="hover:bg-blue-600/10 transition-colors group">
                   <td className="p-4 flex items-center gap-4">
-                    <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-600 shadow-md group-hover:border-blue-500 transition-all">
-                      <Image 
-                        src={item.cdnImageUrl || `/img/items/${item.id}.png`} 
-                        alt={item.name} 
-                        fill 
-                        className="object-cover" 
-                        unoptimized
-                      />
+                    <div className="relative group/item">
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-600 shadow-md group-hover:border-blue-500 transition-all">
+                        <Image 
+                          src={item.cdnImageUrl || `/img/items/${item.id}.png`} 
+                          alt={item.name} 
+                          fill 
+                          className="object-cover" 
+                          unoptimized
+                        />
+                      </div>
+                      <div className="absolute z-[9999] bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900/95 backdrop-blur-sm border border-gray-500 rounded-xl shadow-2xl hidden group-hover/item:block pointer-events-none">
+                        <h4 className="font-bold text-blue-400 mb-1 text-sm">{item.name}</h4>
+                        <div className="text-xs text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseItemDesc(item) }}></div>
+                      </div>
                     </div>
                     <span className="font-bold text-gray-200 group-hover:text-blue-400 transition-colors">{item.name}</span>
                   </td>

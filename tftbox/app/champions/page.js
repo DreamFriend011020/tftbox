@@ -126,6 +126,13 @@ export default function ChampionsPage() {
 
   const SortIcon = ({ column }) => sortColumn === column ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : null;
 
+  // 챔피언 스킬 설명 파싱
+  const parseSkillDesc = (desc) => {
+    if (!desc) return '';
+    // 간단한 태그 정리
+    return desc.replace(/<br\s*\/?>/gi, '<br/>').replace(/<[^>]+>/g, (match) => `<span class="text-blue-300">${match}</span>`);
+  };
+
   return (
     <div className="min-h-screen bg-[#0f111a] text-gray-100 font-sans">
       <Navbar />
@@ -182,14 +189,26 @@ export default function ChampionsPage() {
               ) : sortedAndFilteredChampions.map((champ) => (
                 <tr key={champ.id} className="hover:bg-blue-600/10 transition-colors group">
                   <td className="p-4 flex items-center gap-4">
-                    <div className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 shadow-md group-hover:border-blue-500 transition-all ${getCostColor(champ.cost)}`}>
-                      <Image 
-                        src={`/img/champions/${(champ.character_id || champ.id)}.png`} 
-                        alt={champ.name} 
-                        fill 
-                        className="object-cover" 
-                        unoptimized
-                      />
+                    <div className="relative group/champ">
+                      <div className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 shadow-md group-hover:border-blue-500 transition-all ${getCostColor(champ.cost)}`}>
+                        <Image 
+                          src={`/img/champions/${(champ.character_id || champ.id)}.png`} 
+                          alt={champ.name} 
+                          fill 
+                          className="object-cover" 
+                          unoptimized
+                        />
+                      </div>
+                      {/* 챔피언 스킬 툴팁 */}
+                      <div className="absolute z-[9999] bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-gray-900/95 backdrop-blur-sm border border-gray-500 rounded-xl shadow-2xl hidden group-hover/champ:block pointer-events-none">
+                        <h4 className="font-bold text-white mb-1 text-sm">{champ.name}</h4>
+                        {champ.ability && (
+                          <>
+                            <p className="text-xs font-bold text-blue-400 mb-1">{champ.ability.name}</p>
+                            <div className="text-xs text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseSkillDesc(champ.ability.desc) }}></div>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <span className="font-bold text-gray-200 group-hover:text-blue-400 transition-colors">{champ.name}</span>
                   </td>
