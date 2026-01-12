@@ -89,6 +89,10 @@ export default function ItemsPage() {
           .filter((item, index, self) => 
             index === self.findIndex((t) => t.name === item.name)
           );
+
+        // [디버그] 현재 페이지에 표시되는 아이템 목록 출력
+        console.log("=== 표시되는 아이템 목록 ===");
+        console.log(processedItems.map(item => `${item.name} (${item.apiName || item.id}) - ${item.category}`).join('\n'));
     
         setItems(processedItems);
       } catch (error) {
