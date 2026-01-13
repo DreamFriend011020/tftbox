@@ -193,9 +193,12 @@ export default function ItemsPage() {
       'scaleMR': 'mr',
       'scaleHealth': 'health',
       'scaleMana': 'mana',
+      'scaleManaRe': 'manaregeneration',
       'scaleAttackSpeed': 'attackspeed',
       'scaleCrit': 'crit',
       'scaleSV': 'vamp',
+      'scaleDamage': 'damage',
+      'scaleDuration': 'durability',
     };
 
     result = result.replace(/%i:([^%]+)%/g, (match, type) => {

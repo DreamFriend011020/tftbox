@@ -2,7 +2,7 @@ export const BLACKLIST_KEYWORDS = [
    // 1. 시스템 및 내부 데이터 (System & Internal Data)
     'Augment', 'TFT_Assist', 'Grant', 'BlankSlot', 'Consumable',
   'Debug', 'Display', 'Tutorial', 'Event', 'TFT_Admin', 'Missing',
-  'TFT_Item_Ring', 'TFT_Item_Mystic', 'TFT_Item_Map', 'TFT_Item_Hex',
+  'TFT_Item_Ring', 'TFT_Item_Mystic', 'TFT_Item_Map', 'Hydra',
   'TFT_Item_Blank', 'TFT_Item_Empty', 'TFT_Item_Spawn', 'TFT_Item_Unknown',
   'CypherArmoryItem', 'RecommendedArmory', 'PrototypeForge',
 
