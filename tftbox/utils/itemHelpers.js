@@ -2,7 +2,7 @@ export const BLACKLIST_KEYWORDS = [
    // 1. 시스템 및 내부 데이터 (System & Internal Data)
     'Augment', 'TFT_Assist', 'Grant', 'BlankSlot', 'Consumable',
   'Debug', 'Display', 'Tutorial', 'Event', 'TFT_Admin', 'Missing',
-  'TFT_Item_Ring', 'TFT_Item_Mystic', 'TFT_Item_Map', 'Hydra',
+  'TFT_Item_Ring', 'TFT_Item_Mystic', 'TFT_Item_Map', 'TFT_Item_TitanicHydra',
   'TFT_Item_Blank', 'TFT_Item_Empty', 'TFT_Item_Spawn', 'TFT_Item_Unknown',
   'CypherArmoryItem', 'RecommendedArmory', 'PrototypeForge',
 
@@ -29,7 +29,7 @@ export const BLACKLIST_KEYWORDS = [
     const id = parseInt(item.id) || 0;
   
     if (apiName.includes('radiant')) return 'radiant';
-    if (apiName.includes('artifact') || apiName.includes('ornn') || apiName.includes('Darkin')) return 'artifact';
+    if (apiName.includes('artifact') || apiName.includes('ornn') || apiName.includes('Darkin') || apiName.includes('shimmerscale')) return 'artifact';
     if (apiName.includes('emblemitem') || apiName.includes('emblem') || name.includes('상징')) return 'emblem';
     if (apiName.includes('bilgewater')) return 'trait'; // 요청하신 특성 분류
     if (apiName.includes('support')) return 'support';
@@ -44,6 +44,14 @@ export const BLACKLIST_KEYWORDS = [
     const id = parseInt(item.id) || 0;
   
     if (!name.trim() || name === " ") return false;
+
+    // [추가] 블랙리스트에 있지만 예외적으로 허용할 아이템 (Shimmerscale 등)
+    const WHITELIST_APINAMES = [
+      'TFT7_Item_ShimmerscaleGamblersBlade',
+      'TFT7_Item_ShimmerscaleMogulsMail'
+    ];
+    if (WHITELIST_APINAMES.includes(apiName)) return true;
+
     if (BLACKLIST_KEYWORDS.some(key => apiName.includes(key))) return false;
 
     // 상징 아이템 시즌 필터링: 세트 번호가 있고, 현재 시즌과 다르면 제외

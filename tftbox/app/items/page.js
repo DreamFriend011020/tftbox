@@ -8,6 +8,21 @@ import Navbar from '../components/Navbar';
 import { getItemCategory, isValidItem } from '../../utils/itemHelpers';
 import { ITEM_DESCRIPTIONS } from '../../utils/itemDescriptions';
 
+const FallbackImage = ({ src, fallbackSrc, alt, ...props }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  return (
+    <Image
+      {...props}
+      src={imgSrc}
+      alt={alt}
+      onError={() => {
+        if (imgSrc !== fallbackSrc) setImgSrc(fallbackSrc);
+      }}
+    />
+  );
+};
+
 export default function ItemsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -275,8 +290,9 @@ export default function ItemsPage() {
                   <td className="p-4 flex items-center gap-4">
                     <div className="relative group/item">
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-600 shadow-md group-hover:border-blue-500 transition-all">
-                        <Image 
-                          src={item.cdnImageUrl || `/img/items/${item.id}.png`} 
+                        <FallbackImage 
+                          src={`/img/items/${item.id}.png`}
+                          fallbackSrc={item.cdnImageUrl}
                           alt={item.name} 
                           fill 
                           className="object-cover" 
@@ -309,7 +325,14 @@ export default function ItemsPage() {
                     <div className="flex gap-1.5">
                       {item.from?.map((cid, i) => (
                         <div key={i} className="w-8 h-8 rounded border border-gray-700 bg-black/40 p-0.5 hover:border-gray-400 transition-all">
-                          <Image src={`https://ddragon.leagueoflegends.com/cdn/16.1.1/img/tft-item/${cid}.png`} alt="recipe" width={32} height={32} unoptimized />
+                          <FallbackImage 
+                            src={`/img/items/${cid}.png`}
+                            fallbackSrc={`https://ddragon.leagueoflegends.com/cdn/16.1.1/img/tft-item/${cid}.png`}
+                            alt="recipe" 
+                            width={32} 
+                            height={32} 
+                            unoptimized 
+                          />
                         </div>
                       )) || <span className="text-gray-500 text-xs">-</span>}
                     </div>
