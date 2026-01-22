@@ -2,7 +2,7 @@ export const BLACKLIST_KEYWORDS = [
    // 1. 시스템 및 내부 데이터 (System & Internal Data)
     'Augment', 'TFT_Assist', 'Grant', 'BlankSlot', 'Consumable',
   'Debug', 'Display', 'Tutorial', 'Event', 'TFT_Admin', 'Missing',
-  'TFT_Item_Ring', 'TFT_Item_Mystic', 'TFT_Item_Map', 'TFT_Item_TitanicHydra',
+  'TFT_Item_Ring', 'TFT_Item_Mystic', 'TFT_Item_Map', 
   'TFT_Item_Blank', 'TFT_Item_Empty', 'TFT_Item_Spawn', 'TFT_Item_Unknown',
   'CypherArmoryItem', 'RecommendedArmory', 'PrototypeForge',
 
@@ -17,10 +17,10 @@ export const BLACKLIST_KEYWORDS = [
 
   // 4. 현재 시즌에 사용되지 않는 유물 및 지원 아이템 (Outdated Artifacts & Support Items)
   'DuskbladeOfDraktharr', 'RocketPropelledFist', 'InnervatingLocket', 'BansheesVeil',
-  'EternalWinter', 'ZzRotPortal', 'TrickstersGlass', 'DeathfireGrasp', 'SuspiciousTrenchCoat',
+  'EternalWinter', 'ZzRotPortal', 'TrickstersGlass', 'DeathfireGrasp', 'SuspiciousTrenchCoat', 'TitanicHydra', 'OrnnAnimaVisage',
   'UnendingDespair', 'SpectralCutlass', 'ForbiddenIdol', 'RanduinsSanctum', 'ObsidianCleaver',
   'AegisOfTheLegion', 'RadiantVirtue', 'ThiefsGlovesSupport', 
-  'SupportKnightsVow', 'Moonstone', 'MendingEchoes'
+  'SupportKnightsVow', 'Moonstone', 'MendingEchoes', 'TFT4_Item_OrnnMuramana'
 ];
   
   export function getItemCategory(item) {
@@ -29,7 +29,7 @@ export const BLACKLIST_KEYWORDS = [
     const id = parseInt(item.id) || 0;
   
     if (apiName.includes('radiant')) return 'radiant';
-    if (apiName.includes('artifact') || apiName.includes('ornn') || apiName.includes('Darkin') || apiName.includes('shimmerscale')) return 'artifact';
+    if (apiName.includes('artifact') || apiName.includes('ornn') || apiName.includes('darkin') || apiName.includes('shimmerscale')) return 'artifact';
     if (apiName.includes('emblemitem') || apiName.includes('emblem') || name.includes('상징')) return 'emblem';
     if (apiName.includes('bilgewater')) return 'trait'; // 요청하신 특성 분류
     if (apiName.includes('support')) return 'support';
@@ -63,8 +63,8 @@ export const BLACKLIST_KEYWORDS = [
     }
   
     // 화이트리스트 검사: 재료, 특수 아이템, 혹은 조합법이 있는 완성템
-    const isComponent = (id >= 1 && id <= 9) || apiName.includes('Component');
-    const isSpecial = /Radiant|Artifact|Ornn|Support|Emblem|Bilgewater/i.test(apiName) || name.includes('상징');
+    const isComponent = (id >= 1 && id <= 9) || /component/i.test(apiName);
+    const isSpecial = /Radiant|Artifact|Ornn|Support|Emblem|Bilgewater|Darkin/i.test(apiName) || name.includes('상징');
     const hasRecipe = item.from && item.from.length > 0;
   
     // [수정] 조합법이 있으면 무조건 유효한 아이템으로 처리 (일반 완성 아이템)
