@@ -1,10 +1,27 @@
 'use client';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 
+const FallbackImage = ({ src, fallbackSrc, alt, ...props }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  return (
+    <Image
+      {...props}
+      src={imgSrc}
+      alt={alt}
+      onError={() => {
+        if (imgSrc !== fallbackSrc) setImgSrc(fallbackSrc);
+      }}
+    />
+  );
+};
+
 export default function ChampionsPage() {
+  const router = useRouter();
   const [champions, setChampions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [costFilter, setCostFilter] = useState('all');
@@ -15,19 +32,21 @@ export default function ChampionsPage() {
   useEffect(() => {
     const fetchChampions = async () => {
       try {
-        const res = await fetch('/api/ddragon/data/ko_KR/tft-champion.json');
-        const data = await res.json();
-        let champsArray = Object.values(data.data).filter(c => c.tier !== undefined); // 티어 정보 있는 것만
+        const [champRes, itemRes] = await Promise.all([
+          fetch('/api/ddragon/data/ko_KR/tft-champion.json').then(res => res.ok ? res : fetch('https://ddragon.leagueoflegends.com/cdn/16.1.1/data/ko_KR/tft-champion.json')),
+          fetch('/api/ddragon/data/ko_KR/tft-item.json').then(res => res.ok ? res : fetch('https://ddragon.leagueoflegends.com/cdn/16.1.1/data/ko_KR/tft-item.json'))
+        ]);
 
-        // 최근 세트 자동 감지 및 필터링
-        // 챔피언 ID(예: TFT13_Jinx)의 접두사를 카운트하여 가장 많은 세트를 현재 세트로 간주
+        const champData = await champRes.json();
+        const itemData = await itemRes.json();
+
+        const itemsArray = Object.values(itemData.data).filter(item => !item.isElusive && item.id > 9);
+        let champsArray = Object.values(champData.data).filter(c => c.tier !== undefined);
+
         const setCounts = {};
         champsArray.forEach(c => {
-          const id = c.character_id || c.id; // character_id가 없으면 id 사용
-          if (id) {
-            const prefix = id.split('_')[0];
-            setCounts[prefix] = (setCounts[prefix] || 0) + 1;
-          }
+          const prefix = (c.character_id || c.id).split('_')[0];
+          setCounts[prefix] = (setCounts[prefix] || 0) + 1;
         });
         const currentSetPrefix = Object.keys(setCounts).reduce((a, b) => setCounts[a] > setCounts[b] ? a : b, '');
         
@@ -35,13 +54,31 @@ export default function ChampionsPage() {
           champsArray = champsArray.filter(c => (c.character_id || c.id).startsWith(currentSetPrefix));
         }
 
-        // 가상 데이터 생성 (평균 등수, 승률, 빈도) 및 상태 저장
         champsArray = champsArray.map(champ => {
           const averagePlacement = 4.0 + (champ.name.length % 20) / 10;
           const winRate = 10 + (champ.name.length % 15);
           const frequency = 5000 + (champ.name.length * 1500);
           const top4Rate = 48.0 + (champ.name.length % 30) / 2;
-          return { ...champ, averagePlacement, winRate, frequency, top4Rate };
+          
+          const seed = champ.name.length;
+          const recommendedItems = [
+            itemsArray[seed % itemsArray.length],
+            itemsArray[(seed * 2) % itemsArray.length],
+            itemsArray[(seed * 3) % itemsArray.length]
+          ].filter(Boolean).map(item => ({
+            ...item,
+            cdnImageUrl: `https://ddragon.leagueoflegends.com/cdn/16.1.1/img/tft-item/${item.image?.full || item.id + '.png'}`
+          }));
+
+          return { 
+            ...champ, 
+            averagePlacement, 
+            winRate, 
+            frequency, 
+            top4Rate,
+            recommendedItems,
+            cdnImageUrl: `https://ddragon.leagueoflegends.com/cdn/16.1.1/img/tft-champion/${champ.image?.full || champ.id + '.png'}`
+          };
         });
 
         setChampions(champsArray);
@@ -54,33 +91,25 @@ export default function ChampionsPage() {
     fetchChampions();
   }, []);
 
-  const getTier = (avg) => {
-    if (avg <= 4.2) return 'S';
-    if (avg <= 4.4) return 'A';
-    if (avg <= 4.6) return 'B';
-    if (avg <= 4.8) return 'C';
-    return 'D';
-  };
-
   const sortedAndFilteredChampions = useMemo(() => {
     const tierOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 };
     const getTier = (avg) => {
-      if (avg <= 4.2) return 'S';
-      if (avg <= 4.4) return 'A';
-      if (avg <= 4.6) return 'B';
-      if (avg <= 4.8) return 'C';
+      if (avg <= 4.25) return 'S';
+      if (avg <= 4.45) return 'A';
+      if (avg <= 4.65) return 'B';
+      if (avg <= 4.85) return 'C';
       return 'D';
     };
 
     return champions
       .filter(champ => {
-        const matchesCost = costFilter === 'all' ? true : (costFilter === '5+' ? champ.cost >= 5 : champ.cost === parseInt(costFilter));
+        const matchesCost = costFilter === 'all' ? true : costFilter === '5+' ? champ.cost >= 5 : champ.cost === parseInt(costFilter);
         const matchesSearch = champ.name.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCost && matchesSearch;
       })
       .sort((a, b) => {
         const order = sortDirection === 'asc' ? 1 : -1;
-
+        
         if (sortColumn === 'tier') {
           const tierA = tierOrder[getTier(a.averagePlacement)];
           const tierB = tierOrder[getTier(b.averagePlacement)];
@@ -104,13 +133,13 @@ export default function ChampionsPage() {
 
   const getCostColor = (cost) => {
     switch (cost) {
-      case 1: return 'border-gray-500';
-      case 2: return 'border-green-500';
-      case 3: return 'border-blue-500';
-      case 4: return 'border-purple-500';
-      case 5: return 'border-yellow-500';
-      case 7: return 'border-orange-500'; // 특수 코스트 예시
-      default: return 'border-gray-700';
+      case 1: return 'border-gray-500 text-gray-400';
+      case 2: return 'border-green-500 text-green-400';
+      case 3: return 'border-blue-500 text-blue-400';
+      case 4: return 'border-purple-500 text-purple-400';
+      case 5: return 'border-yellow-500 text-yellow-400';
+      case 7: return 'border-orange-500 text-orange-400';
+      default: return 'border-gray-700 text-gray-400';
     }
   };
 
@@ -119,19 +148,11 @@ export default function ChampionsPage() {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortColumn(column);
-      // 승률, Top 4%, 빈도는 높은 것이 좋으므로 내림차순 기본
       setSortDirection(['winRate', 'top4Rate', 'frequency'].includes(column) ? 'desc' : 'asc');
     }
   };
 
   const SortIcon = ({ column }) => sortColumn === column ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : null;
-
-  // 챔피언 스킬 설명 파싱
-  const parseSkillDesc = (desc) => {
-    if (!desc) return '';
-    // 간단한 태그 정리
-    return desc.replace(/<br\s*\/?>/gi, '<br/>').replace(/<[^>]+>/g, (match) => `<span class="text-blue-300">${match}</span>`);
-  };
 
   return (
     <div className="min-h-screen bg-[#0f111a] text-gray-100 font-sans">
@@ -157,7 +178,7 @@ export default function ChampionsPage() {
               </button>
             ))}
           </div>
-
+          
           <div className="relative group">
             <input
               type="text"
@@ -187,34 +208,29 @@ export default function ChampionsPage() {
               {loading ? (
                 <tr><td colSpan="7" className="p-20 text-center text-blue-500 animate-pulse font-bold">데이터를 로딩 중입니다...</td></tr>
               ) : sortedAndFilteredChampions.map((champ) => (
-                <tr key={champ.id} className="hover:bg-blue-600/10 transition-colors group">
+                <tr 
+                  key={champ.id} 
+                  onClick={() => router.push(`/champions/${champ.character_id || champ.id}`)}
+                  className="hover:bg-blue-600/10 transition-colors group cursor-pointer"
+                >
                   <td className="p-4 flex items-center gap-4">
                     <div className="relative group/champ">
                       <div className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 shadow-md group-hover:border-blue-500 transition-all ${getCostColor(champ.cost)}`}>
-                        <Image 
+                        <FallbackImage 
                           src={`/img/champions/${(champ.character_id || champ.id)}.png`} 
+                          fallbackSrc={champ.cdnImageUrl}
                           alt={champ.name} 
                           fill 
                           className="object-cover" 
                           unoptimized
                         />
                       </div>
-                      {/* 챔피언 스킬 툴팁 */}
-                      <div className="absolute z-[9999] bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-gray-900/95 backdrop-blur-sm border border-gray-500 rounded-xl shadow-2xl hidden group-hover/champ:block pointer-events-none">
-                        <h4 className="font-bold text-white mb-1 text-sm">{champ.name}</h4>
-                        {champ.ability && (
-                          <>
-                            <p className="text-xs font-bold text-blue-400 mb-1">{champ.ability.name}</p>
-                            <div className="text-xs text-gray-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: parseSkillDesc(champ.ability.desc) }}></div>
-                          </>
-                        )}
-                      </div>
                     </div>
                     <span className="font-bold text-gray-200 group-hover:text-blue-400 transition-colors">{champ.name}</span>
                   </td>
                   <td className="p-4">
                     <span className={`text-xl font-black ${getTierColor(champ.averagePlacement)}`}>
-                      {getTier(champ.averagePlacement)}
+                      {champ.averagePlacement <= 4.25 ? 'S' : champ.averagePlacement <= 4.45 ? 'A' : 'B'}
                     </span>
                   </td>
                   <td className="p-4 font-mono text-gray-300">#{champ.averagePlacement.toFixed(2)}</td>
@@ -230,9 +246,18 @@ export default function ChampionsPage() {
                   <td className="p-4 text-sm text-gray-400">{champ.frequency.toLocaleString()}</td>
                   <td className="p-4">
                     <div className="flex gap-1.5">
-                      <div className="w-8 h-8 bg-gray-800 rounded border border-gray-700" title="아이템 1"></div>
-                      <div className="w-8 h-8 bg-gray-800 rounded border border-gray-700" title="아이템 2"></div>
-                      <div className="w-8 h-8 bg-gray-800 rounded border border-gray-700" title="아이템 3"></div>
+                      {champ.recommendedItems?.map((item, idx) => (
+                        <div key={idx} className="relative w-8 h-8 rounded border border-gray-700 overflow-hidden group/item">
+                          <FallbackImage 
+                            src={`/img/items/${item.id}.png`}
+                            fallbackSrc={item.cdnImageUrl}
+                            alt={item.name} 
+                            fill 
+                            className="object-cover" 
+                            unoptimized
+                          />
+                        </div>
+                      ))}
                     </div>
                   </td>
                 </tr>

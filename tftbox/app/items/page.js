@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 // 만약 utils 파일에서 가져오는 것이 계속 에러가 난다면, 
@@ -24,6 +25,7 @@ const FallbackImage = ({ src, fallbackSrc, alt, ...props }) => {
 };
 
 export default function ItemsPage() {
+  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('all');
@@ -86,6 +88,7 @@ export default function ItemsPage() {
             const category = getItemCategory(item); // 유틸리티 함수 사용
     
             // 가상 데이터 생성 (ID와 이름 기반으로 고정값 생성)
+            // TODO: [Unimplemented] 실제 통계 데이터(API/DB) 연동 필요. 현재는 임의의 값으로 시뮬레이션 중입니다.
             const seed = name.length + (parseInt(item.id) || 0);
             
             return { 
@@ -240,7 +243,6 @@ export default function ItemsPage() {
             {[
               { id: 'all', label: '전체' },
               { id: 'completed', label: '일반' },
-              { id: 'component', label: '재료' },
               { id: 'artifact', label: '유물' },
               { id: 'radiant', label: '찬란한' },
               { id: 'emblem', label: '상징' },
@@ -286,7 +288,11 @@ export default function ItemsPage() {
               {loading ? (
                 <tr><td colSpan="6" className="p-20 text-center text-blue-500 animate-pulse font-bold">데이터를 로딩 중입니다...</td></tr>
               ) : sortedAndFilteredItems.map((item) => (
-                <tr key={item.id} className="hover:bg-blue-600/10 transition-colors group">
+                <tr 
+                  key={item.id} 
+                  onClick={() => router.push(`/items/${item.id}`)}
+                  className="hover:bg-blue-600/10 transition-colors group cursor-pointer"
+                >
                   <td className="p-4 flex items-center gap-4">
                     <div className="relative group/item">
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-600 shadow-md group-hover:border-blue-500 transition-all">

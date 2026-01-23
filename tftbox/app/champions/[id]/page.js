@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import Navbar from '../components/Navbar';
+import Navbar from '../../components/Navbar';
 
 const FallbackImage = ({ src, fallbackSrc, alt, ...props }) => {
   const [imgSrc, setImgSrc] = useState(src);
@@ -94,6 +94,7 @@ export default function ChampionDetailPage() {
       case 3: return 'border-blue-500 text-blue-400';
       case 4: return 'border-purple-500 text-purple-400';
       case 5: return 'border-yellow-500 text-yellow-400';
+      case 7: return 'border-orange-500 text-orange-400';
       default: return 'border-gray-700 text-gray-400';
     }
   };
